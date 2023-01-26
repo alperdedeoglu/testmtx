@@ -1,0 +1,19 @@
+{{- if (default dict .Values.multitenancy).enabled }}
+  {{- $srvHostFull := include "cap.deploymentHostFull" (merge (dict "name" "srv" "deployment" .Values.srv) . ) }}
+  {{- $defaultAppUrls := dict
+    "getDependencies" (print "https://" $srvHostFull "/-/cds/saas-provisioning/dependencies")
+    "onSubscription" (print "https://" $srvHostFull "/-/cds/saas-provisioning/tenant/{tenantId}")
+    "onSubscriptionAsync" false
+    "onUnSubscriptionAsync" false
+    "callbackTimeoutMillis" 300000
+  }}
+  {{- $defaultParameters := dict
+      "xsappname" .Values.xsuaa.parameters.xsappname
+      "appName" .Values.xsuaa.parameters.xsappname
+      "displayName" .Chart.Name
+      "description" .Chart.Description
+      "category" "CAP Application"
+      "appUrls" $defaultAppUrls
+  }}
+  {{- include "cap.service-instance" (merge (dict "defaultParameters" $defaultParameters ) . ) }}
+{{ end }}

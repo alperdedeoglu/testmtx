@@ -1,0 +1,116 @@
+global:
+  domain: &domain c-3702941.kyma.ondemand.com
+  imagePullSecret: {}
+  namespace: &namespace 'default' 
+
+
+multitenancy:
+  enabled: true
+
+srv:
+  bindings:
+    service-manager:
+      serviceInstanceName: service-manager
+    auth:
+      serviceInstanceName: xsuaa
+    destination:
+      serviceInstanceName: destination
+    html5:
+      serviceInstanceFullname: html5-apps-repo-runtime
+  image:
+    repository: adedeoglu011/alper-srv
+    tag: latest
+  resources:
+    limits:
+      ephemeral-storage: 1G
+      memory: 500M
+    requests:
+      ephemeral-storage: 1G
+      cpu: 500m
+      memory: 500M
+  health_check:
+    liveness:
+      path: /
+    readiness:
+      path: /
+  env:
+    kymaDomain: *domain 
+    namespace:  *namespace
+
+router:
+  bindings:
+    auth:
+      serviceInstanceName: xsuaa
+    destination:
+      serviceInstanceName: destination
+    html5:
+      serviceInstanceFullname: html5-apps-repo-runtime
+  image:
+    repository: adedeoglu011/alper-router
+    tag: latest
+  resources:
+    limits:
+      ephemeral-storage: 1G
+      memory: 500M
+    requests:
+      ephemeral-storage: 1G
+      cpu: 500m
+      memory: 500M
+  health_check:
+    liveness:
+      path: /health
+    readiness:
+      path: /
+  env:
+    TENANT_HOST_PATTERN: '^(.*)-alper-router-default.c-3702941.kyma.ondemand.com'
+
+xsuaa:
+  serviceOfferingName: xsuaa
+  servicePlanName: application
+  parameters:
+    xsappname: cds-mtxs
+  config: xs-security.json
+
+saas_registry:
+  fullnameOverride: saas-registry
+  serviceOfferingName: saas-registry
+  servicePlanName: application
+
+service_manager:
+  serviceOfferingName: service-manager
+  servicePlanName: container
+
+html5_apps_repo_host:
+  fullnameOverride: html5-apps-repo-host
+  serviceOfferingName: html5-apps-repo
+  servicePlanName: app-host
+
+html5_apps_repo_runtime:
+  fullnameOverride: html5-apps-repo-runtime
+  serviceOfferingName: html5-apps-repo
+  servicePlanName: app-runtime
+
+html5_apps_deployer:
+  cloudService: alper.bookstore
+  backendDestinations: {}
+  image:
+    repository: adedeoglu011/html5
+    tag: latest
+  bindings:
+    xsuaa:
+      serviceInstanceName: xsuaa ## Not required -> give feedback
+    html5_apps_repo:
+      serviceInstanceFullname: html5-apps-repo-host
+  resources:
+    limits:
+      cpu: 550m
+      memory: 1G
+    requests:
+      cpu: 500m
+      memory: 1G
+destination:
+  serviceOfferingName: destination
+  servicePlanName: lite
+  parameters:
+    version: 1.0.0
+    HTML5Runtime_enabled: true
